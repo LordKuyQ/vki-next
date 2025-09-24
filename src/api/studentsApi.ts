@@ -16,7 +16,7 @@ export const getStudentsApi = async (): Promise<StudentInterface[]> => {
   }
 };
 
-export const deleteStudentApi = async (studentId: number): Promise<{ success: boolean }> => {
+export const deleteStudentApi = async (studentId: number): Promise<number> => {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API}students/${studentId}`, {
       method: 'DELETE',
@@ -27,10 +27,10 @@ export const deleteStudentApi = async (studentId: number): Promise<{ success: bo
     }
     
     const result = await response.json();
-    return result;
+    return studentId;
   }
   catch (err) {
     console.log('>>> deleteStudentApi', err);
-    return { success: false };
+    return 0;
   }
 };

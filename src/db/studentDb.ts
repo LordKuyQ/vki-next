@@ -83,3 +83,29 @@ export const addRandomStudentsDb = async (amount: number = 10): Promise<FioInter
 
   return fios;
 };
+
+
+/**
+ * Добавление студента
+ * @param mount количество добавляемых записей - 10 по умолчанию
+ * @returns
+ */
+export const addStudentsDb = async (): Promise<FioInterface[]> => {
+  const db = new sqlite3.Database(process.env.DB ?? './db/vki-web.db');
+
+  const fios: FioInterface[] = [];
+
+  await new Promise((resolve, reject) => {
+    db.run(`INSERT INTO student (firstName, lastName, middleName, groupId) VALUES ${}`, [], (err) => {
+      if (err) {
+        reject(err);
+        db.close();
+        return;
+      }
+      resolve(fios);
+      db.close();
+    });
+  });
+
+  return fios;
+};

@@ -1,3 +1,4 @@
+
 interface StudentInterface {
   id: number;
   firstName: string;
@@ -5,6 +6,6 @@ interface StudentInterface {
   middleName: string;
   groupId: number;
   isDeleted?: boolean;
-};
+}
 
 export default StudentInterface;

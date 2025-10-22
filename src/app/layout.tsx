@@ -48,7 +48,7 @@ const RootLayout = async ({ children }: Readonly<{ children: React.ReactNode }>)
 
   return (
     <TanStackQuery state={state}>
-      <html lang="ru">
+      <html lang="ru" suppressHydrationWarning>
         <body>
           <Header />
           <Main>

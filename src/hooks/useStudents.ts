@@ -4,21 +4,27 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-import { deleteStudentApi, getStudentsApi } from '@/api/studentsApi';
+import { v4 as uuidv4 } from 'uuid';
+import { addStudentApi, deleteStudentApi, getStudentsApi } from '@/api/studentsApi';
 import type StudentInterface from '@/types/StudentInterface';
+import queryClient from '@/api/reactQueryClient';
 
 interface StudentsHookInterface {
   students: StudentInterface[];
-  deleteStudentMutate: (studentId: number) => void;
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
+  deleteStudent: (studentId: number) => void;
+  addStudent: (student: Omit<StudentInterface, 'id'> & { uuid?: string }) => void;
 }
 
 const useStudents = (): StudentsHookInterface => {
   const queryClient = useQueryClient();
 
-  const { data, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['students'],
     queryFn: () => getStudentsApi(),
-    enabled: false,
+    enabled: true,
   });
 
   /**
@@ -68,11 +74,47 @@ const useStudents = (): StudentsHookInterface => {
     //   console.log('>> deleteStudentMutate onSettled', data, error, variables, context);
     // },
   });
+  
+  /**
+   * Мутация добавления студента
+  */
+ const addStudentMutation = useMutation({
+  // вызов API add
+   mutationFn: async (student: Omit<StudentInterface, 'id'> & { uuid?: string }) => addStudentApi(student),
+   // оптимистичная мутация (обновляем данные на клиенте до API запроса add)
+   onMutate: async (newStudent: Omit<StudentInterface, 'id'> & { uuid?: string }) => {
+     await queryClient.cancelQueries({ queryKey: ['students'] });
+     // получаем данные из TanStackQuery
+     const previousStudents = queryClient.getQueryData<StudentInterface[]>(['students']);
+     const uuid = newStudent.uuid || uuidv4();
+     const optimisticStudent = { id: -1, uuid, ...newStudent } as StudentInterface;
+
+     // обновляем данные в TanStackQuery
+     queryClient.setQueryData<StudentInterface[]>(
+       ['students'],
+       [optimisticStudent, ...(previousStudents ?? [])]
+      );
+      return { previousStudents, uuid };
+    },
+    onError: (_err, _variables, context) => {
+      queryClient.setQueryData<StudentInterface[]>(['students'], context?.previousStudents);
+    },
+    onSuccess: (createdStudent, _variables, context) => {
+      const prev = queryClient.getQueryData<StudentInterface[]>(['students']) ?? [];
+      const replaced = prev.map(s => (s.uuid === context?.uuid ? createdStudent : s));
+      queryClient.setQueryData<StudentInterface[]>(['students'], replaced);
+    },
+  });
 
   return {
     students: data ?? [],
-    deleteStudentMutate: deleteStudentMutate.mutate,
+    isLoading,
+    error: (error as Error) ?? null,
+    refetch,
+    deleteStudent: deleteStudentMutate.mutate,
+    addStudent: addStudentMutation.mutate,
   };
 };
-
-export default useStudents;
+  
+  export default useStudents;
+  

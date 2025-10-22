@@ -5,6 +5,7 @@ interface StudentInterface {
   middleName: string;
   groupId: number;
   isDeleted?: boolean;
+  uuid?: string;
 };
 
 export default StudentInterface;

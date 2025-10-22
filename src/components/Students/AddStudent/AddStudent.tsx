@@ -1,15 +1,16 @@
 // 'use client';
 
 // import { useState } from 'react';
-// import { addStudentApi } from '@/api/studentsApi';
+// import { v4 as uuidv4 } from 'uuid';
 // import { getGroupsApi } from '@/api/groupsApi';
 // import type StudentInterface from '@/types/StudentInterface';
 // import type GroupInterface from '@/types/GroupInterface';
 // import styles from './AddStudent.module.scss';
 
 // interface AddStudentProps {
-//   onStudentAdded: () => void;
+//   onStudentAdded: (student: Omit<StudentInterface, 'id'> & { uuid?: string }) => void;
 // }
+
 
 
 //   return (

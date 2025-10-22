@@ -85,27 +85,32 @@ export const addRandomStudentsDb = async (amount: number = 10): Promise<FioInter
 };
 
 
-// /**
-//  * Добавление студента
-//  * @param mount количество добавляемых записей - 10 по умолчанию
-//  * @returns
-//  */
-// export const addStudentsDb = async (): Promise<FioInterface[]> => {
-//   const db = new sqlite3.Database(process.env.DB ?? './db/vki-web.db');
+/**
+ * Добавление студента
+ */
+export const addStudentDb = async (student: Omit<StudentInterface, 'id'>): Promise<StudentInterface> => {
+  const db = new sqlite3.Database(process.env.DB ?? './db/vki-web.db');
 
-//   const fios: FioInterface[] = [];
-
-//   await new Promise((resolve, reject) => {
-//     db.run(`INSERT INTO student (firstName, lastName, middleName, groupId) VALUES ${}`, [], (err) => {
-//       if (err) {
-//         reject(err);
-//         db.close();
-//         return;
-//       }
-//       resolve(fios);
-//       db.close();
-//     });
-//   });
-
-//   return fios;
-// };
+  return new Promise((resolve, reject) => {
+    const sql = 'INSERT INTO student (firstName, lastName, middleName, groupId) VALUES (?, ?, ?, ?)';
+    db.run(sql, [student.firstName, student.lastName, student.middleName, student.groupId], function(err) {
+      if (err) {
+        console.error('Error adding student:', err);
+        reject(err);
+        db.close();
+        return;
+      }
+      
+       const newStudent: StudentInterface = {
+        id: this.lastID,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        middleName: student.middleName,
+        groupId: student.groupId
+      };
+      
+      resolve(newStudent);
+      db.close();
+  });
+  });
+};

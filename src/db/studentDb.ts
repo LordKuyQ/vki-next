@@ -38,6 +38,22 @@ export const addStudentDb = async (studentFields: Omit<StudentInterface, 'id'>):
 };
 
 /**
+ * Добавление студента
+ * @param studentField поля студента
+ * @returns
+ */
+export const editStudentDb = async (studentFields: Omit<StudentInterface, 'id'>): Promise<StudentInterface> => {
+  const student = new Student();
+  const newStudent = await studentRepository.save({
+    ...student,
+    ...studentFields,
+  });
+  return newStudent;
+};
+
+
+
+/**
  * Добавление  рандомных студента
  */
 export const addRandomStudentsDb = async (amount: number = 10): Promise<StudentInterface[]> => {

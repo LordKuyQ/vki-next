@@ -59,3 +59,29 @@ export const addStudentApi = async (studentData: Omit<StudentInterface, 'id'>): 
     throw err;
   }
 };
+
+export const editStudentApi = async (studentData: Omit<StudentInterface, 'id'>): Promise<StudentInterface> => {
+  try {
+    const apiUrl = `${process.env.NEXT_PUBLIC_API}students`;
+
+    const response = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(studentData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('>>> addStudentApi error response:', errorText);
+      throw new Error(`Ошибка HTTP: ${response.status} ${response.statusText}. ${errorText}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (err) {
+    console.error('>>> addStudentApi catch error:', err);
+    throw err;
+  }
+};

@@ -5,7 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
-import { addStudentApi, deleteStudentApi, getStudentsApi } from '@/api/studentsApi';
+import { addStudentApi, deleteStudentApi, editStudentApi, getStudentsApi } from '@/api/studentsApi';
 import type StudentInterface from '@/types/StudentInterface';
 import queryClient from '@/api/reactQueryClient';
 
@@ -16,6 +16,7 @@ interface StudentsHookInterface {
   refetch: () => void;
   deleteStudent: (studentId: number) => void;
   addStudent: (student: Omit<StudentInterface, 'id'> & { uuid?: string }) => void;
+  editStudent: (student: Omit<StudentInterface, 'id'> & { uuid?: string }) => void;
 }
 
 const useStudents = (): StudentsHookInterface => {
@@ -106,6 +107,41 @@ const useStudents = (): StudentsHookInterface => {
     },
   });
 
+
+  /**
+   * Мутация редактирования студента
+  */
+ const editStudentMutation = useMutation({
+   mutationFn: async (student: Omit<StudentInterface, 'id'> & { uuid?: string }) => editStudentApi(student),
+   onMutate: async (newStudent: Omit<StudentInterface, 'id'> & { uuid?: string }) => {
+     await queryClient.cancelQueries({ queryKey: ['students'] });
+
+     // получаем данные из TanStackQuery
+     const previousStudents = queryClient.getQueryData<StudentInterface[]>(['students']);
+     const uuid = newStudent.uuid || uuidv4();
+     const optimisticStudent = { id: -1, uuid, ...newStudent } as StudentInterface;
+
+     // обновляем данные в TanStackQuery
+     queryClient.setQueryData<StudentInterface[]>(
+       ['students'],
+       [optimisticStudent, ...(previousStudents ?? [])]
+      );
+      return { previousStudents, uuid };
+    },
+
+    onError: (_err, _variables, context) => {
+      queryClient.setQueryData<StudentInterface[]>(['students'], context?.previousStudents);
+    },
+    onSuccess: (createdStudent, _variables, context) => {
+      const prev = queryClient.getQueryData<StudentInterface[]>(['students']) ?? [];
+      const replaced = prev.map(s => (s.uuid === context?.uuid ? createdStudent : s));
+      queryClient.setQueryData<StudentInterface[]>(['students'], replaced);
+    },
+  });
+
+
+
+
   return {
     students: data ?? [],
     isLoading,
@@ -113,6 +149,7 @@ const useStudents = (): StudentsHookInterface => {
     refetch,
     deleteStudent: deleteStudentMutate.mutate,
     addStudent: addStudentMutation.mutate,
+    editStudent: editStudentMutation.mutate,
   };
 };
   
